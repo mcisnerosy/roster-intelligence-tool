@@ -1,3 +1,6 @@
+# Import our custom functions
+from recruiting_data import load_recruiting_data, analyze_recruiting_composition
+
 # Import streamlit, the library that turns Python scripts into web applications
 # This is the core library that builds every page, button, table, and chart in the tool
 import streamlit as st
@@ -45,13 +48,21 @@ st.set_page_config(
 # This is how staff switches between the three pages of the tool
 # st.sidebar puts the navigation menu on the left side of the screen
 st.sidebar.title('Notre Dame Roster Intelligence')
+
+# Data Quality Callout
+st.info(
+    "**Data Quality Note:** Roster counts reflect CFBD-linked profiles (~70% of actual roster coverage). "
+    "Walk-ons, recent transfers, and non-linked players may not appear. "
+    "Use position thresholds and flags as a starting point for roster evaluation, not the definitive source."
+)
+
 st.sidebar.markdown('---')
 
 # Create the page selection dropdown in the sidebar
 # The three options map directly to our three blueprint pages
 page = st.sidebar.selectbox(
     'Navigate to:',
-    ['Roster Depth Dashboard', 'Position Deep Dive', 'Recruit Discovery']
+    ['Roster Depth Dashboard', 'Position Deep Dive', 'Recruit Discovery', 'Recruiting Positioning']
 )
 
 # Define a function to fetch Notre Dame's roster from the CFBD API
@@ -357,3 +368,64 @@ if page == 'Recruit Discovery':
 
     else:
         st.warning('No recruiting data found for the selected filters. Try adjusting the year or star rating.')
+
+# PAGE 4 — RECRUITING POSITIONING
+if page == 'Recruiting Positioning':
+
+    st.title('📊 Recruiting Class Composition')
+    
+    st.info(
+        "Compare Notre Dame's recruiting by position against Georgia, Ohio State, and Alabama. "
+        "Identify where ND is over-recruiting or under-recruiting relative to elite programs."
+    )
+    
+    # Load data
+    with st.spinner("Loading recruiting data..."):
+        recruiting_df = load_recruiting_data()
+    
+    if not recruiting_df.empty:
+        import plotly.express as px
+        
+        st.subheader("Recruiting by Position (2023-2025 Combined)")
+        
+        # Group by team and position, count recruits
+        pos_counts = recruiting_df.groupby(['team', 'position']).size().reset_index(name='count')
+        
+        # Filter to main positions only (no extras)
+        main_positions = ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'S']
+        pos_counts = pos_counts[pos_counts['position'].isin(main_positions)]
+        
+        # Sort positions in logical order
+        pos_counts['position'] = pd.Categorical(pos_counts['position'], categories=main_positions, ordered=True)
+        pos_counts = pos_counts.sort_values('position')
+        
+        # Create grouped bar chart
+        fig = px.bar(
+            pos_counts,
+            x='position',
+            y='count',
+            color='team',
+            barmode='group',
+            title='Recruiting Comparison by Position',
+            labels={'position': 'Position', 'count': 'Number of Recruits', 'team': 'Program'},
+            height=500
+        )
+        
+        fig.update_layout(
+            xaxis_title='Position',
+            yaxis_title='Number of Recruits',
+            hovermode='x unified',
+            showlegend=True
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Raw data table below for reference
+        st.markdown('---')
+        st.subheader('Position Breakdown (Raw Data)')
+        
+        pivot_table = pos_counts.pivot(index='position', columns='team', values='count').fillna(0).astype(int)
+        st.dataframe(pivot_table, use_container_width=True)
+        
+    else:
+        st.error("No recruiting data loaded.")
