@@ -23,6 +23,7 @@ Current Notre Dame roster depth by position group with defined thresholds for wh
 - Color-coded status per position: 🟢 Healthy · 🟡 Watch · 🔴 Critical
 - Threshold logic is explicit (e.g., fewer than 2 scholarship QBs = Critical)
 - One-click navigation from a flagged position directly to Recruit Discovery
+<img width="2340" height="1304" alt="image" src="https://github.com/user-attachments/assets/18ea85ed-d778-4fb0-bfc7-07776f2f43c4" />
 
 ### 2. Position Deep Dive
 Full player table for a selected position plus competitor headcount.
@@ -30,6 +31,7 @@ Full player table for a selected position plus competitor headcount.
 - Name, year, height, weight, hometown, walk-on indicator
 - Bar chart comparing Notre Dame headcount vs. Ohio State, Georgia, Alabama at that position
 - Walk-on detection based on presence of CFBD recruiting profile
+<img width="2340" height="1300" alt="image" src="https://github.com/user-attachments/assets/8173114c-c418-410c-b87e-f1d45ca57fb1" />
 
 ### 3. Recruit Discovery
 Filter the national recruit pool to find prospects that address identified gaps.
@@ -38,6 +40,7 @@ Filter the national recruit pool to find prospects that address identified gaps.
 - Position mapping translates CFBD recruiting labels (OT, IOL, EDGE) to standard groups (OL, DL)
 - Sorted by composite rating. Top prospects first
 - Pre-populates position when navigated from a Page 1 alert
+<img width="2308" height="1362" alt="image" src="https://github.com/user-attachments/assets/fa95fea1-8db3-4f73-afe9-dcd1440d7b5c" />
 
 ### 4. Recruiting Class Composition
 Side-by-side comparison of Notre Dame's recruiting class composition vs. peer programs.
@@ -45,6 +48,7 @@ Side-by-side comparison of Notre Dame's recruiting class composition vs. peer pr
 - Headcount by position group. 2023–2025 combined classes
 - Average star rating by position group. Identifies quality vs. volume tradeoffs
 - Programs compared: Notre Dame, Georgia, Ohio State, Alabama
+<img width="2340" height="1400" alt="image" src="https://github.com/user-attachments/assets/f19b7c8c-f7de-44eb-8bfc-6343fd68954d" />
 
 ---
 
@@ -134,5 +138,7 @@ roster-intelligence-tool/
 - Recruiting class quality vs. CFP roster composition analysis
 
 ---
+
+This project was built with assistance from Claude (Anthropic) via Claude Code for debugging, API integration, and code structure. Project direction, analytical framing, and interpretation of findings were the author's own.
 
 Built by [Marcos Cisneros](https://github.com/mcisnerosy)
