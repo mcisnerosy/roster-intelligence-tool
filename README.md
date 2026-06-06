@@ -21,7 +21,7 @@ Current Notre Dame roster depth by position group with defined thresholds for wh
 
 - Positions organized by unit (Offense, Defense, Special Teams)
 - Color-coded status per position: 🟢 Healthy · 🟡 Watch · 🔴 Critical
-- Threshold logic is explicit — e.g., fewer than 2 scholarship QBs = Critical
+- Threshold logic is explicit (e.g., fewer than 2 scholarship QBs = Critical)
 - One-click navigation from a flagged position directly to Recruit Discovery
 
 ### 2. Position Deep Dive
@@ -36,21 +36,21 @@ Filter the national recruit pool to find prospects that address identified gaps.
 
 - Filters: position, class year (2025–2028), minimum star rating, commitment status
 - Position mapping translates CFBD recruiting labels (OT, IOL, EDGE) to standard groups (OL, DL)
-- Sorted by composite rating — top prospects first
+- Sorted by composite rating. Top prospects first
 - Pre-populates position when navigated from a Page 1 alert
 
 ### 4. Recruiting Class Composition
 Side-by-side comparison of Notre Dame's recruiting class composition vs. peer programs.
 
-- Headcount by position group — 2023–2025 combined classes
-- Average star rating by position group — identifies quality vs. volume tradeoffs
+- Headcount by position group. 2023–2025 combined classes
+- Average star rating by position group. Identifies quality vs. volume tradeoffs
 - Programs compared: Notre Dame, Georgia, Ohio State, Alabama
 
 ---
 
 ## Key Design Decisions
 
-**Why those four competitor programs?** Ohio State, Georgia, and Alabama represent three distinct recruiting models — Ohio State (Midwest pipeline), Georgia (SEC dominance), Alabama (national reach) — that Notre Dame competes with directly for top recruits.
+**Why those four competitor programs?** Ohio State, Georgia, and Alabama represent three distinct recruiting models, Ohio State (Midwest pipeline), Georgia (SEC dominance), Alabama (national reach), that Notre Dame competes with directly for top recruits.
 
 **Why headcount thresholds?** Standard college football roster construction guidelines suggest a minimum of 2 scholarship QBs, 6 OL, 4 WR, etc. for a healthy depth chart. These thresholds are defined explicitly in `app.py` and can be adjusted.
 
