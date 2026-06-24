@@ -25,6 +25,8 @@ Roster depth for the selected team by position group, with thresholds for what c
 - Season selector covering 2021 to 2024
 - One click from a flagged position into Recruit Discovery
 
+<img width="2340" height="1304" alt="image" src="https://github.com/user-attachments/assets/18ea85ed-d778-4fb0-bfc7-07776f2f43c4" />
+
 ### 2. Position Deep Dive
 Player table for one position, plus transfer portal history and a competitor comparison.
 
@@ -32,6 +34,8 @@ Player table for one position, plus transfer portal history and a competitor com
 - Transfer portal history column (in or out, year, origin/destination), from CFBD's portal endpoint
 - Bar chart comparing headcount against up to 4 competitor programs at that position
 - Walk-on flag based on whether the player has a CFBD recruiting profile
+
+<img width="2340" height="1300" alt="image" src="https://github.com/user-attachments/assets/8173114c-c418-410c-b87e-f1d45ca57fb1" />
 
 ### 3. Recruit Discovery
 Filters the national recruit pool down to prospects that match an identified gap.
@@ -42,6 +46,8 @@ Filters the national recruit pool down to prospects that match an identified gap
 - Choropleth map of uncommitted recruits by state, top 3 per state on hover
 - Pre-fills the position filter when arriving from a Page 1 alert
 
+<img width="2308" height="1362" alt="image" src="https://github.com/user-attachments/assets/fa95fea1-8db3-4f73-afe9-dcd1440d7b5c" />
+
 ### 4. Recruiting Positioning
 Compares the selected team's recruiting class against chosen competitors.
 
@@ -49,6 +55,8 @@ Compares the selected team's recruiting class against chosen competitors.
 - Average star rating by position group, to see quality vs. volume
 - Gap tab showing where the team recruits above or below the competitor average, by position
 - Pick up to 4 competitors, set independently of the other pages
+
+<img width="2340" height="1400" alt="image" src="https://github.com/user-attachments/assets/f19b7c8c-f7de-44eb-8bfc-6343fd68954d" />
 
 ---
 
@@ -143,5 +151,7 @@ roster-intelligence-tool/
 Full version history, including the move from single-team to multi-team, is in [CHANGELOG.md](CHANGELOG.md).
 
 ---
+
+This project was built with assistance from Claude (Anthropic) via Claude Code for debugging, API integration, and code structure. Project direction, analytical framing, and interpretation of findings were the author's own.
 
 Built by [Marcos Cisneros](https://github.com/mcisnerosy)
