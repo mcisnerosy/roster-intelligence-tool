@@ -3,7 +3,7 @@
 
 ---
 
-## V2.0 — Multi-Team Release
+## V2.0: Multi-Team Release
 *Generalized the tool from Notre Dame-specific to all 134 FBS programs.*
 
 **New features**
@@ -43,7 +43,7 @@
 
 ---
 
-## V1.0 — Initial Release
+## V1.0: Initial Release
 *Notre Dame-specific roster intelligence tool.*
 
 **Features**

@@ -1,60 +1,66 @@
-# ☘️ Notre Dame Roster Intelligence Tool
+# 🏈 CFB Roster Intelligence Tool
 
-A data-driven Streamlit app for analyzing Notre Dame football roster depth, surfacing recruiting gaps, and benchmarking recruiting strategy against elite programs.
+A Streamlit app for tracking college football roster depth and recruiting gaps, for any FBS program.
 
 **Live App:** [roster-intelligence-tool.streamlit.app](https://roster-intelligence-tool.streamlit.app)
 
-> **Data source:** [College Football Data API (CFBD)](https://collegefootballdata.com) — ~70% FBS roster coverage. Walk-ons and recently transferred players may not appear. Cross-reference with internal systems before acting on alerts.
+> **Data source:** [College Football Data API (CFBD)](https://collegefootballdata.com), roughly 70% FBS roster coverage. Walk-ons and recent transfers may not appear. Cross-reference with internal systems before acting on alerts.
 
 ---
 
 ## What It Does
 
-College football staff spend time manually tracking roster depth in spreadsheets. This tool pulls live roster and recruiting data from the CFBD API and surfaces the information that matters to a recruiting department in four focused views.
+Recruiting staff often track roster depth by hand in spreadsheets. This tool pulls live roster and recruiting data from the CFBD API across four pages. Pick a team in the sidebar, and every page, chart, and threshold follows that team.
 
 ---
 
 ## The Four Pages
 
 ### 1. Roster Depth Dashboard
-Current Notre Dame roster depth by position group with defined thresholds for what constitutes a critical gap.
+Roster depth for the selected team by position group, with thresholds for what counts as a gap.
 
-- Positions organized by unit (Offense, Defense, Special Teams)
+- Positions grouped by unit (Offense, Defense, Special Teams)
 - Color-coded status per position: 🟢 Healthy · 🟡 Watch · 🔴 Critical
-- Threshold logic is explicit (e.g., fewer than 2 scholarship QBs = Critical)
-- One-click navigation from a flagged position directly to Recruit Discovery
+- Thresholds are explicit, e.g. fewer than 2 scholarship QBs is Critical
+- Season selector covering 2021 to 2024
+- One click from a flagged position into Recruit Discovery
 
 ### 2. Position Deep Dive
-Full player table for a selected position plus competitor headcount.
+Player table for one position, plus transfer portal history and a competitor comparison.
 
 - Name, year, height, weight, hometown, walk-on indicator
-- Bar chart comparing Notre Dame headcount vs. Ohio State, Georgia, Alabama at that position
-- Walk-on detection based on presence of CFBD recruiting profile
+- Transfer portal history column (in or out, year, origin/destination), from CFBD's portal endpoint
+- Bar chart comparing headcount against up to 4 competitor programs at that position
+- Walk-on flag based on whether the player has a CFBD recruiting profile
 
 ### 3. Recruit Discovery
-Filter the national recruit pool to find prospects that address identified gaps.
+Filters the national recruit pool down to prospects that match an identified gap.
 
-- Filters: position, class year (2025–2028), minimum star rating, commitment status
-- Position mapping translates CFBD recruiting labels (OT, IOL, EDGE) to standard groups (OL, DL)
-- Sorted by composite rating. Top prospects first
-- Pre-populates position when navigated from a Page 1 alert
+- Filters: position, class year (2025 to 2028), minimum star rating, commitment status
+- Maps CFBD's recruiting labels (OT, IOL, EDGE) onto roster position groups (OL, DL); the two use different naming
+- Sorted by composite rating, top prospects first
+- Choropleth map of uncommitted recruits by state, top 3 per state on hover
+- Pre-fills the position filter when arriving from a Page 1 alert
 
-### 4. Recruiting Class Composition
-Side-by-side comparison of Notre Dame's recruiting class composition vs. peer programs.
+### 4. Recruiting Positioning
+Compares the selected team's recruiting class against chosen competitors.
 
-- Headcount by position group. 2023–2025 combined classes
-- Average star rating by position group. Identifies quality vs. volume tradeoffs
-- Programs compared: Notre Dame, Georgia, Ohio State, Alabama
+- Headcount by position group, 2023 to 2025 classes combined
+- Average star rating by position group, to see quality vs. volume
+- Gap tab showing where the team recruits above or below the competitor average, by position
+- Pick up to 4 competitors, set independently of the other pages
 
 ---
 
 ## Key Design Decisions
 
-**Why those four competitor programs?** Ohio State, Georgia, and Alabama represent three distinct recruiting models, Ohio State (Midwest pipeline), Georgia (SEC dominance), Alabama (national reach), that Notre Dame competes with directly for top recruits.
+**Why a team selector instead of one fixed team?** The first version was built just for Notre Dame. Switching teams now recolors the charts to that team's brand color and reruns the position math against that team's roster.
 
-**Why headcount thresholds?** Standard college football roster construction guidelines suggest a minimum of 2 scholarship QBs, 6 OL, 4 WR, etc. for a healthy depth chart. These thresholds are defined explicitly in `app.py` and can be adjusted.
+**Why does each page pick its own competitors?** Page 2 and Page 4 answer different questions, so each gets its own competitor list (up to 4) instead of one shared sidebar selection.
 
-**Why CFBD?** It's the most comprehensive free API for college football roster and recruiting data, with documented endpoints and consistent structure going back to 2014.
+**Why these headcount thresholds?** They follow common roster construction rules of thumb, like needing 2+ scholarship QBs or 6+ OL. Defined in `app.py`, easy to adjust.
+
+**Why CFBD?** It's the most complete free API for college football roster and recruiting data, with consistent coverage back to 2014.
 
 ---
 
@@ -62,10 +68,11 @@ Side-by-side comparison of Notre Dame's recruiting class composition vs. peer pr
 
 | Issue | Impact | Mitigation |
 |---|---|---|
-| ~70% roster coverage | Some players missing | Note shown on dashboard |
-| Walk-on detection via recruitIds | Inaccurate for some transfers | Labeled "No Profile" not "Walk-On" |
-| CFBD recruiting positions ≠ roster positions | Filters return wrong results without mapping | Position mapping dict in app.py |
-| 2025 class data incomplete until signing day | Undercounts current cycle | Year filter defaults to 2025; caveat in UI |
+| ~70% roster coverage | Some players missing | Noted on the dashboard |
+| Walk-on detection via recruitIds | Inaccurate for some transfers | Labeled "No Profile," not "Walk-On" |
+| CFBD recruiting positions don't match roster positions | Filters return nothing without a mapping | `RECRUIT_POSITION_MAP` in app.py |
+| 2025 class data incomplete until signing day | Undercounts the current cycle | Year filter defaults to 2025; caveat shown in UI |
+| Portal name matching is string-based | Misses nicknames, e.g. "CJ" vs "Cornelius" | Best-effort match, not used for alerts |
 
 ---
 
@@ -93,14 +100,14 @@ Get a free CFBD API key at [collegefootballdata.com](https://collegefootballdata
 
 ## Streamlit Cloud Deployment
 
-1. Push repo to GitHub (ensure `.env` and `secrets.toml` are in `.gitignore`)
-2. Go to [share.streamlit.io](https://share.streamlit.io) → New app → select this repo
-3. Set main file path to `app.py`
-4. Under **Advanced settings → Secrets**, add:
+1. Push the repo to GitHub (keep `.env` and `secrets.toml` in `.gitignore`)
+2. Go to [share.streamlit.io](https://share.streamlit.io), New app, select this repo
+3. Set the main file path to `app.py`
+4. Under Advanced settings, Secrets, add:
    ```toml
    CFBD_API_KEY = "your_key_here"
    ```
-5. Deploy — live in ~2 minutes
+5. Deploy. Live in a couple minutes.
 
 ---
 
@@ -108,14 +115,15 @@ Get a free CFBD API key at [collegefootballdata.com](https://collegefootballdata
 
 ```
 roster-intelligence-tool/
-├── app.py                  # Main Streamlit app — all four pages
-├── recruiting_data.py      # CFBD recruiting API helpers (cached)
-├── requirements.txt        # Pinned dependencies
-├── .env                    # Local API key — NOT committed
+├── app.py                  # Streamlit app: team selector, theme, all four pages
+├── recruiting_data.py      # CFBD recruiting API calls (cached)
+├── data_exploration.ipynb  # Notebook for poking at the raw data
+├── requirements.txt        # Dependencies
+├── .env                    # Local API key, not committed
 ├── .gitignore
 ├── .streamlit/
-│   ├── config.toml         # Theme — Notre Dame navy/gold
-│   └── secrets.toml        # Cloud API key — NOT committed
+│   ├── config.toml         # Base theme config
+│   └── secrets.toml        # Cloud API key, not committed
 └── README.md
 ```
 
@@ -123,15 +131,16 @@ roster-intelligence-tool/
 
 ## Roadmap
 
-**V1.1**
-- Transfer portal layer — flag players who entered the portal in prior cycles
-- Eligibility column on player table (years remaining)
-- State-level recruit map on Recruit Discovery page
-
-**V2**
-- Roster projection model — forecast depth 2+ years out by class year
+**V2.1**
+- Eligibility column on the player table (years remaining)
+- Roster projection model: forecast depth a couple years out by class year
 - Offer-to-commit conversion rate by position
-- Recruiting class quality vs. CFP roster composition analysis
+
+**V3**
+- Recruiting class quality vs. CFP roster composition
+- Saved team/competitor presets per session
+
+Full version history, including the move from single-team to multi-team, is in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

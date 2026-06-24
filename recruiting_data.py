@@ -41,7 +41,7 @@ try:
         load_dotenv()
         API_KEY = os.getenv('CFBD_API_KEY')
 except Exception:
-    # Not running in Streamlit context — fall back to .env
+    # Not running in Streamlit context, fall back to .env
     load_dotenv()
     API_KEY = os.getenv('CFBD_API_KEY')
 
@@ -76,7 +76,7 @@ try:
 
         Args:
             team: Exact CFBD team name (e.g. 'Notre Dame', 'Ohio State').
-                  Must match CFBD's naming convention — see TEAM_COLORS in app.py
+                  Must match CFBD's naming convention, see TEAM_COLORS in app.py
                   for the verified list of correct names.
             year: Recruiting class year (e.g. 2024 = players who signed in
                   the 2023-24 cycle).
@@ -90,8 +90,8 @@ try:
             - 'position' uses CFBD recruiting labels (OT, IOL, EDGE, APB, etc.)
               which differ from roster position labels (OL, DL, RB, etc.).
               The RECRUIT_POSITION_MAP in app.py handles this translation.
-            - 'rating' is CFBD's composite rating on a 0.0–1.0 scale.
-              It is NOT the same as star rating (1–5).
+            - 'rating' is CFBD's composite rating on a 0.0-1.0 scale.
+              It is NOT the same as star rating (1-5).
             - 2025 class data is incomplete until National Signing Day.
         """
         url = 'https://api.collegefootballdata.com/recruiting/players'
@@ -105,7 +105,7 @@ try:
             if not data:
                 return pd.DataFrame()
 
-            # Extract only the fields we use — keeps DataFrames lean
+            # Extract only the fields we use, keeps DataFrames lean
             records = []
             for recruit in data:
                 records.append({
@@ -127,12 +127,12 @@ try:
             return pd.DataFrame()
 
 except ImportError:
-    # Running outside Streamlit — same function without the cache decorator.
+    # Running outside Streamlit, same function without the cache decorator.
     # Used for standalone testing and data exploration in notebooks.
     def fetch_recruiting_class(team: str, year: int) -> pd.DataFrame:
         """
         Fetch a single team's signed recruiting class for one year from CFBD.
-        (Uncached version — used when running outside Streamlit context.)
+        (Uncached version, used when running outside Streamlit context.)
         """
         url = 'https://api.collegefootballdata.com/recruiting/players'
         params = {'team': team, 'year': year}
@@ -173,7 +173,7 @@ def load_recruiting_data(
         teams: List of CFBD team names. Defaults to the four programs used
                on Page 4, but Page 4 passes the user-selected team and
                competitors dynamically.
-        years: List of recruiting class years to include. 2023–2025 gives
+        years: List of recruiting class years to include. 2023-2025 gives
                three cycles of data for trend analysis.
 
     Returns:
@@ -211,9 +211,9 @@ def analyze_recruiting_composition(df: pd.DataFrame) -> dict:
 
     Returns:
         Dict with three keys:
-          'composition'      — recruit count by team, year, position
-          'star_distribution'— recruit count by team, year, star rating
-          'avg_stars'        — mean star rating by team and year
+          'composition'      : recruit count by team, year, position
+          'star_distribution': recruit count by team, year, star rating
+          'avg_stars'        : mean star rating by team and year
         Returns empty dict if df is empty.
     """
     if df.empty:
@@ -247,5 +247,5 @@ if __name__ == '__main__':
         print(f'\nTotal recruits loaded : {len(df)}')
         print(f'Columns               : {list(df.columns)}')
         print(f'Positions found       : {sorted(df["position"].unique())}')
-        print(f'Star range            : {df["stars"].min()}–{df["stars"].max()}')
-        print(f'Rating range          : {df["rating"].min():.4f}–{df["rating"].max():.4f}')
+        print(f'Star range            : {df["stars"].min()}-{df["stars"].max()}')
+        print(f'Rating range          : {df["rating"].min():.4f}-{df["rating"].max():.4f}')

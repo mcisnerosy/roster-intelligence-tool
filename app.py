@@ -1,5 +1,5 @@
 """
-app.py — CFB Roster Intelligence Tool
+app.py: CFB Roster Intelligence Tool
 =======================================
 Main Streamlit application. Handles all UI rendering, page routing,
 API calls for roster and portal data, and chart generation.
@@ -14,10 +14,10 @@ Architecture:
     defined in the module-level sections below.
 
 Pages:
-  1. Roster Depth Dashboard  — depth by position with color-coded alerts + year selector
-  2. Position Deep Dive       — player table + portal history + competitor headcount chart
-  3. Recruit Discovery        — national recruit filter + choropleth map
-  4. Recruiting Positioning   — recruiting class composition vs. chosen competitors
+  1. Roster Depth Dashboard  - depth by position with color-coded alerts + year selector
+  2. Position Deep Dive       - player table + portal history + competitor headcount chart
+  3. Recruit Discovery        - national recruit filter + choropleth map
+  4. Recruiting Positioning   - recruiting class composition vs. chosen competitors
 
 Data source: College Football Data API (https://collegefootballdata.com)
   - /roster             → Pages 1 and 2
@@ -49,7 +49,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# Team color database — primary color for every FBS program
+# Team color database: primary color for every FBS program
 # Used to color that team's bar/highlight in charts
 # ---------------------------------------------------------------------------
 TEAM_COLORS = {
@@ -190,9 +190,10 @@ TEAM_COLORS = {
     'Wyoming':                '#FFC425',
 }
 
-# FBS_TEAMS is derived from TEAM_COLORS keys — sorted alphabetically for the sidebar dropdown.
-# To add a new program: add an entry to TEAM_COLORS and it will automatically appear here.
-# Team names must match CFBD's naming convention exactly. Run test_teams.py to verify.
+# FBS_TEAMS is derived from TEAM_COLORS keys, sorted alphabetically for the sidebar dropdown.
+# To add a new program, add an entry to TEAM_COLORS and it shows up here automatically.
+# Team names must match CFBD's naming convention exactly. Spot-check new entries against
+# the live /roster endpoint before adding, since CFBD's names don't always match common usage.
 FBS_TEAMS = sorted(TEAM_COLORS.keys())
 
 # ---------------------------------------------------------------------------
@@ -214,7 +215,7 @@ FBS_TEAMS = sorted(TEAM_COLORS.keys())
 #   - Sidebar uses a neutral dark slate (#0f0f1a → #1a1a2e) so it works
 #     for any team selection without clashing with team colors.
 #   - Status badges use semantic colors: red (critical), amber (watch),
-#     green (healthy) — defined as .badge-red, .badge-yellow, .badge-green.
+#     green (healthy), defined as .badge-red, .badge-yellow, .badge-green.
 #
 # Known CSS workaround:
 #   - Streamlit's sidebar selectbox renders white text on white background
@@ -325,7 +326,7 @@ div[data-testid="stTabs"] button {
     font-size: 13px !important;
 }
 
-/* ── Sidebar radio nav — styled as clean link list ── */
+/* Sidebar radio nav: styled as a clean link list */
 
 section[data-testid="stSidebar"] .stRadio label {
     color: #CBD5E1 !important;
@@ -378,7 +379,7 @@ if not API_KEY:
 HEADERS = {'Authorization': f'Bearer {API_KEY}'}
 
 # ---------------------------------------------------------------------------
-# Sidebar — team selector + competitor selector + navigation
+# Sidebar: team selector + competitor selector + navigation
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("""
 <div style="text-align:center; padding: 16px 0 8px 0;">
@@ -420,7 +421,7 @@ _cur_idx = PAGES.index(st.session_state['current_page']) \
 
 # Dynamic key forces selectbox to re-initialize when navigating programmatically.
 # Each time nav_to fires, we increment a counter so Streamlit treats it as a
-# brand new widget — which means index is respected on that render.
+# brand new widget, so index gets respected on that render.
 if 'nav_counter' not in st.session_state:
     st.session_state['nav_counter'] = 0
 
@@ -442,7 +443,7 @@ st.sidebar.caption(
 )
 
 # ---------------------------------------------------------------------------
-# Team color helpers — derived from selected_team each run
+# Team color helpers: derived from selected_team each run
 # ---------------------------------------------------------------------------
 TEAM_COLOR = TEAM_COLORS.get(selected_team, '#334155')
 
@@ -504,7 +505,7 @@ RECRUIT_POSITION_MAP = {
 }
 
 # PLOTLY_LAYOUT: shared base dict unpacked into every fig.update_layout() call.
-# Intentionally excludes 'yaxis' and 'margin' — if those keys appear in both
+# Intentionally excludes 'yaxis' and 'margin'. If those keys appear in both
 # this dict AND an individual chart's update_layout() call, Python raises:
 #   TypeError: multiple values for keyword argument 'yaxis'
 # Each chart defines its own yaxis/margin to avoid this conflict.
@@ -517,7 +518,7 @@ PLOTLY_LAYOUT = dict(
 
 # ---------------------------------------------------------------------------
 # API helpers
-# All three functions use @st.cache_data(ttl=3600) — 1-hour in-memory cache.
+# All three functions use @st.cache_data(ttl=3600), a 1-hour in-memory cache.
 # First load fetches from CFBD API (1-3 seconds per call).
 # Subsequent interactions within the session use cached data (instant).
 # Cache is per-session on Streamlit Cloud free tier.
@@ -548,10 +549,10 @@ def get_roster(team: str, year: int = 2024) -> pd.DataFrame:
 def get_recruits(year: int) -> pd.DataFrame:
     """
     Fetch ALL national recruits for a class year from CFBD /recruiting/players.
-    Returns uncommitted and committed recruits — Page 3 filters downstream.
+    Returns uncommitted and committed recruits; Page 3 filters downstream.
     Key columns: name, position (CFBD label), stars, rating (0.0-1.0 composite),
     school, city, stateProvince, committedTo (None if uncommitted).
-    Note: 'position' uses CFBD recruiting labels — see RECRUIT_POSITION_MAP.
+    Note: 'position' uses CFBD recruiting labels, see RECRUIT_POSITION_MAP.
     """
     try:
         r = requests.get(
@@ -601,13 +602,13 @@ def get_status(position: str, count: int) -> tuple:
         return '🟢 Healthy', 'badge-green'
 
 # ===========================================================================
-# PAGE 1 — ROSTER DEPTH DASHBOARD
+# PAGE 1: ROSTER DEPTH DASHBOARD
 # ===========================================================================
 if page == 'Roster Depth Dashboard':
 
     title_col, year_col = st.columns([3, 1])
     with title_col:
-        st.title(f'🏈 {selected_team} — Roster Depth Dashboard')
+        st.title(f'🏈 {selected_team} - Roster Depth Dashboard')
     with year_col:
         st.markdown('<div style="padding-top:12px;"></div>', unsafe_allow_html=True)
         selected_year = st.selectbox(
@@ -646,9 +647,9 @@ if page == 'Roster Depth Dashboard':
     m4.metric('🟡 Watch', len(watch_positions))
     st.markdown('---')
 
-    # ── Alert panel — sits above tables, buttons here not inline ─────────
-    # Critical alerts show first with a direct "Find Recruits" button on
-    # the same row. Tables below are clean data with no action column.
+    # Alert panel sits above the tables, not inline. Critical alerts show first
+    # with a direct "Find Recruits" button on the same row; tables below stay
+    # clean data with no action column.
     if flagged_positions:
         st.subheader('⚠️ Immediate Attention Required')
         for pos in flagged_positions:
@@ -656,7 +657,7 @@ if page == 'Roster Depth Dashboard':
             count = len(roster[roster['position'] == pos])
             col_msg, col_btn = st.columns([5, 1])
             col_msg.error(
-                f'**{pos}** — {count} player(s) on roster '
+                f'**{pos}**: {count} player(s) on roster '
                 f'(minimum: >{red_max}). Immediate recruiting attention needed.'
             )
             if col_btn.button(f'Find {pos} →', key=f'alert_btn_{pos}', use_container_width=True):
@@ -669,14 +670,14 @@ if page == 'Roster Depth Dashboard':
         for pos in watch_positions:
             _, yellow_max = POSITION_THRESHOLDS[pos]
             count = len(roster[roster['position'] == pos])
-            st.warning(f'**{pos}** — {count} player(s) on roster (healthy threshold: >{yellow_max}). Monitor this position.')
+            st.warning(f'**{pos}**: {count} player(s) on roster (healthy threshold: >{yellow_max}). Monitor this position.')
         st.markdown('')
 
     if not flagged_positions and not watch_positions:
         st.success('✅ No critical or watch-level position groups at this time.')
         st.markdown('')
 
-    # ── Position depth tables — clean, no action column ───────────────────
+    # Position depth tables: clean, no action column.
     for unit, positions in POSITION_GROUPS.items():
         with st.expander(unit, expanded=True):
             h1, h2, h3 = st.columns([2, 1, 2])
@@ -695,11 +696,11 @@ if page == 'Roster Depth Dashboard':
 
 
 # ===========================================================================
-# PAGE 2 — POSITION DEEP DIVE
+# PAGE 2: POSITION DEEP DIVE
 # ===========================================================================
 elif page == 'Position Deep Dive':
 
-    st.title(f'🔍 Position Deep Dive — {selected_team}')
+    st.title(f'🔍 Position Deep Dive - {selected_team}')
     st.markdown('<p style="color:#64748B; font-size:14px; margin-top:-4px;">Player details and competitor headcount for a selected position</p>', unsafe_allow_html=True)
 
     col_pos, col_comp = st.columns([1, 2])
@@ -737,7 +738,7 @@ elif page == 'Position Deep Dive':
     st.markdown(f'<div style="margin:8px 0 16px 0;"><span class="{badge_class}">{status_label}</span></div>', unsafe_allow_html=True)
     st.markdown('---')
 
-    st.subheader(f'{selected_position} Roster — {selected_team} 2024')
+    st.subheader(f'{selected_position} Roster - {selected_team} 2024')
 
     display_columns = ['firstName', 'lastName', 'year', 'height', 'weight', 'homeCity', 'homeState', 'recruitIds']
     available = [c for c in display_columns if c in position_players.columns]
@@ -755,13 +756,10 @@ elif page == 'Position Deep Dive':
             lambda x: '⚠️ No Profile' if (isinstance(x, list) and len(x) == 0) or pd.isna(x) else '✅ Recruited'
         )
 
-    # ── Portal history ────────────────────────────────────────────────────
-    # Queries CFBD portal data for 2021-2024 and filters to entries where
-    # origin or destination contains the selected team.
-    # Matching is case-insensitive full-name string comparison.
-    # Known limitation: fails for players who go by nicknames (e.g. 'CJ'
-    # vs 'Cornelius') or when CFBD and roster use different name spellings.
-    # Portal history — filter to entries involving selected team
+    # Portal history: queries CFBD portal data for 2021-2024, filters to entries
+    # where origin or destination contains the selected team, and matches on
+    # case-insensitive full name. Misses nicknames (e.g. 'CJ' vs 'Cornelius')
+    # or spelling differences between CFBD and roster data.
     portal_lookup = {}
     for portal_year in [2021, 2022, 2023, 2024]:
         portal_df = get_portal_entries(portal_year)
@@ -792,7 +790,7 @@ elif page == 'Position Deep Dive':
     if 'First' in player_table.columns and 'Last' in player_table.columns:
         def get_portal_status(row):
             name = (str(row.get('First', '')).strip() + ' ' + str(row.get('Last', '')).strip()).lower().strip()
-            return portal_lookup.get(name, '—')
+            return portal_lookup.get(name, '-')
         player_table['Portal History'] = player_table.apply(get_portal_status, axis=1)
 
     st.dataframe(
@@ -801,7 +799,7 @@ elif page == 'Position Deep Dive':
         hide_index=True,
         column_config={
             'Portal History': st.column_config.TextColumn('Portal History', width='large',
-                help='Transfer portal activity involving this program (2021–2024)'),
+                help='Transfer portal activity involving this program (2021-2024)'),
             'Profile':  st.column_config.TextColumn('Profile',  width='medium'),
             'First':    st.column_config.TextColumn('First',    width='small'),
             'Last':     st.column_config.TextColumn('Last',     width='small'),
@@ -815,7 +813,7 @@ elif page == 'Position Deep Dive':
     if not competitors_p2:
         st.info('Select at least one comparison program above to see the headcount chart.')
     else:
-        st.subheader(f'Headcount vs. Peer Programs — {selected_position}')
+        st.subheader(f'Headcount vs. Peer Programs - {selected_position}')
         st.caption(f'2024 scholarship rosters · {selected_team} highlighted in team color')
 
         programs, counts = [selected_team], [count]
@@ -851,7 +849,7 @@ elif page == 'Position Deep Dive':
 
 
 # ===========================================================================
-# PAGE 3 — RECRUIT DISCOVERY
+# PAGE 3: RECRUIT DISCOVERY
 # ===========================================================================
 elif page == 'Recruit Discovery':
 
@@ -902,7 +900,7 @@ elif page == 'Recruit Discovery':
     m1, m2, m3 = st.columns(3)
     m1.metric('Recruits Found', len(filtered))
     m2.metric('Uncommitted', uncommitted_count)
-    m3.metric('Avg Composite Rating', f'{avg_rating:.4f}' if avg_rating else '—')
+    m3.metric('Avg Composite Rating', f'{avg_rating:.4f}' if avg_rating else '-')
     st.markdown('---')
 
     if filtered.empty:
@@ -917,20 +915,19 @@ elif page == 'Recruit Discovery':
             'stateProvince': 'State', 'committedTo': 'Committed To',
         }, inplace=True)
         if 'Committed To' in display_df.columns:
-            display_df['Committed To'] = display_df['Committed To'].fillna('— Uncommitted')
+            display_df['Committed To'] = display_df['Committed To'].fillna('Uncommitted')
         st.dataframe(display_df, use_container_width=True, hide_index=True)
 
-    # ── Choropleth recruit density map ───────────────────────────────────
-    # Fills each US state by uncommitted recruit count — immediately readable
-    # vs. dot maps which require interpreting cluster density.
-    # Color scale: light blue (0 recruits) -> team color (max recruits).
-    # Hover text shows top 3 recruits per state by composite rating.
-    # Only uncommitted recruits are plotted — 'All Recruits' and
-    # 'Committed Only' filters show the map with 0 or fewer dots.
+    # Choropleth recruit density map: fills each US state by uncommitted
+    # recruit count, easier to read than a dot map at a glance. Color scale
+    # runs light blue (0 recruits) to team color (max recruits). Hover shows
+    # the top 3 recruits per state by composite rating. Only uncommitted
+    # recruits get plotted, so 'All Recruits' and 'Committed Only' show
+    # fewer (or zero) dots.
     if not filtered.empty and 'stateProvince' in filtered.columns:
         st.markdown('---')
         st.subheader('📍 Uncommitted Recruit Density by State')
-        st.caption('Uncommitted recruits matching current filters — hover a state for top recruits')
+        st.caption('Uncommitted recruits matching current filters, hover a state for top recruits')
 
         map_df = filtered[filtered['committedTo'].isna()].copy()
         map_df = map_df[map_df['stateProvince'].notna()]
@@ -955,7 +952,7 @@ elif page == 'Recruit Discovery':
             top3_by_state.columns = ['state', 'top3_text']
             state_counts = state_counts.merge(top3_by_state, on='state', how='left')
             state_counts['hover'] = (
-                '<b>' + state_counts['state'] + '</b>  —  ' +
+                '<b>' + state_counts['state'] + '</b>: ' +
                 state_counts['count'].astype(str) + ' uncommitted recruit(s)<br>' +
                 '<i>Top recruits:</i><br>' + state_counts['top3_text']
             )
@@ -1011,11 +1008,11 @@ elif page == 'Recruit Discovery':
 
 
 # ===========================================================================
-# PAGE 4 — RECRUITING POSITIONING
+# PAGE 4: RECRUITING POSITIONING
 # ===========================================================================
 elif page == 'Recruiting Positioning':
 
-    st.title(f'📊 {selected_team} — Recruiting Positioning')
+    st.title(f'📊 {selected_team} - Recruiting Positioning')
 
     default_comps_p4 = [t for t in ['Ohio State', 'Georgia', 'Alabama', 'Clemson'] if t != selected_team][:3]
     competitors_p4 = st.multiselect(
@@ -1036,7 +1033,7 @@ elif page == 'Recruiting Positioning':
     comp_names = ', '.join(competitors_p4)
     st.markdown(
         f'<p style="color:#64748B; font-size:14px; margin-top:-4px;">'
-        f'vs. {comp_names} — 2023–2025 combined classes</p>',
+        f'vs. {comp_names} - 2023-2025 combined classes</p>',
         unsafe_allow_html=True
     )
 
@@ -1077,7 +1074,7 @@ elif page == 'Recruiting Positioning':
     tab1, tab2, tab3 = st.tabs(['Headcount by Position', 'Avg Star Rating by Position', 'Gap vs. Field Average'])
 
     with tab1:
-        st.subheader('Recruits Signed by Position (2023–2025)')
+        st.subheader('Recruits Signed by Position (2023-2025)')
         fig1 = px.bar(
             pos_counts, x='position_group', y='count', color='team',
             barmode='group', color_discrete_map=COLOR_MAP,
@@ -1093,7 +1090,7 @@ elif page == 'Recruiting Positioning':
         st.plotly_chart(fig1, use_container_width=True)
 
     with tab2:
-        st.subheader('Average Star Rating by Position (2023–2025)')
+        st.subheader('Average Star Rating by Position (2023-2025)')
         fig2 = px.bar(
             avg_stars, x='position_group', y='avg_stars', color='team',
             barmode='group', color_discrete_map=COLOR_MAP,
@@ -1109,7 +1106,7 @@ elif page == 'Recruiting Positioning':
         st.plotly_chart(fig2, use_container_width=True)
 
     with tab3:
-        st.subheader(f'{selected_team} Recruiting Gap — vs. Competitor Average')
+        st.subheader(f'{selected_team} Recruiting Gap - vs. Competitor Average')
         st.caption(f'Positive = {selected_team} recruits more than competitor avg · Negative = less · Colored line = zero')
 
         field_avg = (

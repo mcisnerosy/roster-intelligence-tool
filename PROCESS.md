@@ -7,24 +7,22 @@
 
 The idea came from working inside Notre Dame's football program. Recruiting
 staff track roster depth and recruit pipelines through internal systems,
-spreadsheets, and film — but none of those sources answer a specific
+spreadsheets, and film, but none of those sources answer one specific
 question: *given where we're thin right now, who is actually available in
 the national recruit pool to address it?*
 
-That gap — between current roster state and available recruiting targets —
-is what this tool is built to close. The secondary goal was a portfolio
-project. Football analytics roles consistently ask for evidence that you
-can build something functional, not just run models in a notebook. A
-deployed, interactive tool with real data is more compelling than a
-well-commented Jupyter notebook.
+This tool exists to close that gap, between current roster state and
+available recruiting targets. The secondary goal was a portfolio project.
+Football analytics roles ask for evidence you can build something
+functional, not just run models in a notebook.
 
 ---
 
 ## Phase 1: Scope Definition
 
-The first design decision was to avoid scope creep. Football analytics
-projects tend to expand — "let's add injury tracking, NIL data, draft
-projections" — and end up half-finished.
+The first decision was to avoid scope creep. Football analytics projects
+tend to expand, "let's add injury tracking, NIL data, draft projections,"
+and end up half-finished.
 
 The constraint I set: four pages, each answering one specific question a
 recruiting analyst would actually ask on any given day.
@@ -37,12 +35,11 @@ recruiting analyst would actually ask on any given day.
 | Recruiting Positioning | Are we recruiting the right positions strategically? |
 
 Every feature idea got evaluated against those four questions. If it didn't
-serve one of them, it didn't ship — at least not in V1.
+serve one of them, it didn't ship, at least not in V1.
 
 The competitor set started hardcoded to Ohio State, Georgia, and Alabama.
-In V2, this became a user-selectable multiselect, and the tool was
-generalized to work for any FBS program — not just Notre Dame. That
-upgrade made the tool portfolio-defining rather than program-specific.
+In V2 this became a user-selectable multiselect, and the tool was
+generalized to work for any FBS program, not just Notre Dame.
 
 ---
 
@@ -50,21 +47,18 @@ upgrade made the tool portfolio-defining rather than program-specific.
 
 The data source question came before writing any code. The options:
 
-- **247Sports / Rivals** — most comprehensive, requires paid license
-- **ESPN API** — undocumented, rate-limited, unclear terms for programmatic use
-- **CFBD (College Football Data)** — free, documented, consistent structure,
+- **247Sports / Rivals**: most comprehensive, requires paid license
+- **ESPN API**: undocumented, rate-limited, unclear terms for programmatic use
+- **CFBD (College Football Data)**: free, documented, consistent structure,
   covers FBS rosters back to 2014
 
 CFBD was the only viable option for an independent student project. The
-trade-off is ~70% roster coverage — walk-ons and some transfers don't
-appear. That limitation is documented in the tool rather than hidden:
-a tool that acknowledges its data quality constraints is more trustworthy
-than one that doesn't.
+trade-off is ~70% roster coverage, walk-ons and some transfers don't
+appear. That limitation is documented in the tool rather than hidden.
 
-The first thing built before any UI was a data validation script — fetch a
-single team's roster, check field names, check coverage, check position
-label formats. This step caught what became the most important technical
-decision in the project:
+Before writing any UI, I ran a quick script to pull a single team's
+roster and check field names, coverage, and position label formats. That
+step caught the most important technical decision in the project:
 
 **CFBD uses completely different position labels for recruiting data vs.
 roster data.** Recruiting uses `OT`, `IOL`, `EDGE`, `APB`. Roster uses
@@ -78,42 +72,41 @@ The `RECRUIT_POSITION_MAP` constant is the fix.
 
 **Single-file vs. modular**
 
-Initial prototype was a single `app.py`. The first refactor separated
-recruiting data fetching into `recruiting_data.py` for two reasons:
-the recruiting functions are testable without running Streamlit, and
-`app.py` stays focused on UI logic rather than data pipeline logic.
+The initial prototype was a single `app.py`. The first refactor split
+recruiting data fetching into `recruiting_data.py`: the recruiting
+functions are testable without running Streamlit, and `app.py` stays
+focused on UI logic rather than data pipeline logic.
 
 **Caching**
 
 Without caching, every user interaction re-fetches from CFBD. Page 4
-alone makes up to 15 API calls (5 programs × 3 years). With
-`@st.cache_data(ttl=3600)`, the first load is slow but all subsequent
-interactions are instant. The 1-hour TTL is appropriate because CFBD
-data updates at most once per day.
+alone makes up to 15 API calls (5 programs x 3 years). With
+`@st.cache_data(ttl=3600)`, the first load is slow but every later
+interaction is instant. A 1-hour TTL fits because CFBD data updates at
+most once a day.
 
 **Session state for cross-page navigation**
 
-The "Find Recruits →" button on Page 1 pre-populates the position
-filter on Page 3. Streamlit's `st.session_state` handles this:
-the button writes `st.session_state['recruit_position'] = position`,
-triggers `st.rerun()`, and Page 3 reads that value to set the default
-dropdown index. State is cleared after use so it doesn't persist.
+The "Find Recruits" button on Page 1 pre-populates the position filter
+on Page 3. `st.session_state` handles this: the button writes
+`st.session_state['recruit_position'] = position`, triggers
+`st.rerun()`, and Page 3 reads that value for its default dropdown
+index. The value is cleared after use so it doesn't linger.
 
 **Per-page competitor selection vs. sidebar**
 
-V1 put the competitor multiselect in the sidebar. This was changed in V2
-because Pages 2 and 4 serve different analytical questions — a user might
-want different competitors for each. Sidebar selection forces the same
-comparison everywhere. Moving the selector to each page that uses it
-gives users the flexibility to compare against, say, SEC schools on Page 2
-and national programs on Page 4 without changing the sidebar between views.
+V1 put the competitor multiselect in the sidebar. This changed in V2
+because Pages 2 and 4 serve different questions, a user might want
+different competitors for each. Moving the selector onto each page lets
+someone compare against SEC schools on Page 2 and national programs on
+Page 4 without resetting anything in the sidebar.
 
 ---
 
 ## Phase 4: Generalization to All FBS Programs
 
-The biggest upgrade from V1 to V2 was making the tool work for any FBS
-program rather than only Notre Dame.
+The biggest change from V1 to V2 was making the tool work for any FBS
+program instead of only Notre Dame.
 
 **What this required:**
 
@@ -129,26 +122,26 @@ program rather than only Notre Dame.
 
 **Team name validation:**
 
-CFBD uses naming conventions that differ from common usage for ~10 programs.
-Discovered through a systematic test script (`test_teams.py`) that hit the
-API for every team name in `TEAM_COLORS` and reported which returned empty
-rosters. Confirmed fixes:
+CFBD uses naming conventions that differ from common usage for about 10
+programs. I found these by writing a quick script that hit the API for
+every team name in `TEAM_COLORS` and flagged which ones came back with
+an empty roster. Confirmed fixes:
 
 | Common name | CFBD name |
 |---|---|
 | Appalachian State | App State |
 | North Carolina State | NC State |
 | Hawaii | Hawai'i |
-| Ole Miss | Mississippi → Ole Miss |
+| Mississippi | Ole Miss |
 | San Jose State | San José State |
 | UConn | UConn |
 | UMass | Massachusetts |
 | Southern Mississippi | Southern Miss |
 | Sam Houston State | Sam Houston |
 
-Louisiana-Monroe (ULM) was found to have no roster data for any year
-in CFBD's database despite existing as a team entry. Kept in the selector
-with a graceful empty-roster message rather than removed silently.
+Louisiana-Monroe (ULM) turned out to have no roster data for any year in
+CFBD's database, despite existing as a team entry. It stayed in the
+selector with a plain empty-roster message instead of being removed.
 
 ---
 
@@ -156,53 +149,49 @@ with a graceful empty-roster message rather than removed silently.
 
 **Framework choice**
 
-Streamlit over Dash or Flask because the target users — recruiting staff
-and hiring managers — need zero install friction. A live URL they can open
-on a phone during a meeting is more valuable than a technically superior
-app that requires local setup.
+Streamlit over Dash or Flask because the target users, recruiting staff
+and hiring managers, need zero install friction. A live URL they can
+open on a phone during a meeting beats a more polished app that needs
+local setup.
 
 **Font and color system**
 
-Target aesthetic: editorial sports — The Athletic or ESPN Stats & Info,
-not a fan site. Oswald (headings) + Inter (body) because Oswald is the
-dominant font in college football broadcast graphics. The color system is
-team-color-aware: each program's bars and highlights use their actual brand
-color, making charts immediately recognizable.
+Target look: editorial sports, more The Athletic than fan site. Oswald
+(headings) plus Inter (body) because Oswald shows up across college
+football broadcast graphics. The color system follows whichever team is
+selected: each program's bars and highlights use its actual brand color.
 
 **Roster alert panel design**
 
 Early versions had a fourth ACTION column in the depth tables with a
-"Find Recruits" button per critical position. This was changed to a
-dedicated alert panel that renders above the tables when critical positions
-exist. Each alert is a full row with the status message and action button
-side by side. The tables themselves became a clean 3-column display with no
-action column — separating data display from actionable alerts.
+"Find Recruits" button per critical position. That became a dedicated
+alert panel above the tables, shown only when critical positions exist.
+Each alert is a full row with the status message and action button side
+by side. The tables underneath are now a clean 3-column display with no
+action column.
 
 **Choropleth vs. dot map**
 
 The first recruit map used dots at state centroids with jitter for
-clustering. The problem: California with 12 recruits showed 12 dots in
-the middle of the state — visually impressive but analytically useless
-since you couldn't tell at a glance that California had more recruits than
-Montana.
+clustering. The problem: California with 12 recruits showed 12 dots
+bunched in the middle of the state, which looked busy but didn't tell
+you at a glance that California had more recruits than Montana.
 
-A choropleth (filled state map) solves this immediately — color intensity
-communicates density at a glance. The color scale uses light blue (zero
-recruits) to the selected team's brand color (maximum), which keeps the
-tool feeling team-specific even on a generic visualization. Hover text
-shows the top 3 recruits per state by composite rating, turning the map
-from a density display into a scouting reference.
+A choropleth (filled state map) fixes that: color intensity reads as
+density immediately. The color scale runs from light blue (zero
+recruits) to the selected team's brand color (maximum). Hover text
+shows the top 3 recruits per state by composite rating, so the map
+doubles as a scouting reference.
 
 **Gap analysis chart**
 
-The third tab on Page 4 — showing Notre Dame's (or any team's) recruit
-count minus the competitor average at each position — was added because
-the raw headcount and star rating charts answer "what did we do?" but not
-"are we doing it differently than our competitors?" The gap chart answers
-the second question directly. Positive bars (team color) = over-recruiting
-vs. peers. Negative bars (red) = under-recruiting. Plain-language bullet
-summaries render below so a non-analyst can read the chart without
-interpreting the y-axis.
+The third tab on Page 4 shows a team's recruit count minus the
+competitor average at each position. The raw headcount and star rating
+charts answer "what did we do," but not "are we doing it differently
+than our competitors." The gap chart answers that directly. Positive
+bars (team color) mean over-recruiting vs. peers; negative bars (red)
+mean under-recruiting. Plain-language bullet summaries sit below the
+chart so a non-analyst can read the finding without parsing the axis.
 
 ---
 
@@ -210,96 +199,96 @@ interpreting the y-axis.
 
 **`PLOTLY_LAYOUT` dict conflict**
 
-A shared layout dict for all Plotly charts is a clean pattern. It breaks
-the moment any key in the shared dict is also passed as a keyword argument
-in an individual chart's `update_layout()` call. Python raises:
+A shared layout dict for all Plotly charts is a clean pattern, until any
+key in it is also passed as a keyword argument in an individual chart's
+`update_layout()` call. Python raises:
 `TypeError: multiple values for keyword argument 'yaxis'`
 
-The resolution: remove `yaxis` and `margin` from the shared dict entirely.
-Each chart owns its own axis config. Slightly more verbose but error-free.
+Fix: drop `yaxis` and `margin` from the shared dict entirely. Each chart
+owns its own axis config. A bit more typing, but no conflicts.
 
 **The "undefined" legend label**
 
-Plotly Express charts were rendering the text "undefined" above the legend
-in Streamlit's bundled Plotly.js version. The Python-side figure JSON was
-completely clean — the string didn't appear anywhere in it. Root cause:
-Streamlit's bundled Plotly.js (which lags behind the pip-installable
-version) interprets an unset `legend.title.text` field as JavaScript
-`undefined` and renders it literally.
+Plotly Express charts were rendering the literal text "undefined" above
+the legend. The figure's JSON on the Python side was clean, that string
+wasn't in it anywhere. Root cause: Streamlit bundles its own version of
+Plotly.js, which lags behind the pip-installable package, and that older
+version reads an unset `legend.title.text` as JavaScript `undefined` and
+renders it as text.
 
-Fix: `legend=dict(title_text=' ', ...)` — a single space instead of an
-empty string or omitted key. The space is invisible but is a valid
-non-null string that prevents the undefined rendering path.
+Fix: `legend=dict(title_text=' ', ...)`, a single space instead of an
+empty string or no key at all. The space is invisible but counts as a
+valid string, so the undefined path never fires.
 
 **pandas 3.x Arrow backend**
 
-pandas 3.x uses PyArrow as the default backend for certain column types.
-NumPy arithmetic on Arrow-backed Series (adding a float array to a lat/lon
-column for jitter) raises a `TypeError` that doesn't occur in older pandas.
-Fix: `.astype(float)` before arithmetic — forces the column out of the
-Arrow backend. Relevant for any project mixing pandas 3.x with NumPy.
+pandas 3.x uses PyArrow as the default backend for some column types.
+Running NumPy arithmetic on an Arrow-backed Series (adding a float array
+to a lat/lon column for map jitter) raises a `TypeError` that older
+pandas versions don't. Fix: `.astype(float)` before the arithmetic,
+which forces the column off the Arrow backend.
 
 **Portal endpoint URL**
 
-Initial implementation used `/transferportal` — returned empty responses
-for all years. Correct CFBD endpoint is `/player/portal`. Discovered by
-adding a debug expander to Page 2 that printed raw API response data
-including field names and row counts.
+The first attempt hit `/transferportal`, which returned empty responses
+for every year. The correct CFBD endpoint is `/player/portal`. Found by
+adding a debug expander to Page 2 that printed the raw API response,
+field names and row counts included.
 
 **Transfer portal name matching**
 
-First version collected all names from all portal entries and checked if
-a roster player's name appeared anywhere in that set. Wrong in two ways:
-false positives for players sharing a name with someone who transferred
-elsewhere, and no context about direction or year.
+The first version collected every name across all portal entries and
+checked whether a roster player's name showed up anywhere in that set.
+That was wrong two ways: false positives for players who share a name
+with someone else who transferred, and no sense of direction or year.
 
-Fixed by filtering portal entries to only those where `origin` or
-`destination` contains the selected team, then building a structured
-lookup with direction and year: `Transfer In (Duke → ND, 2024)`.
+Fixed by filtering portal entries down to ones where `origin` or
+`destination` contains the selected team, then building a lookup with
+direction and year attached: `Transfer In (Duke → ND, 2024)`.
 
 ---
 
 ## Lessons Applied
 
 **Define thresholds explicitly.** Any tool that flags something as
-"critical" needs to define what that means with a specific number.
-`POSITION_THRESHOLDS` makes the logic visible and adjustable in one place.
+"critical" needs a specific number behind it. `POSITION_THRESHOLDS` keeps
+that logic visible and adjustable in one place.
 
 **Document data quality in the UI, not just the README.** The ~70%
-coverage caveat appears on every page. Users who don't read documentation
-will still see it.
+coverage caveat shows up on every page, so people who skip the docs
+still see it.
 
-**Validate API data before building UI.** The CFBD position label mismatch
-and the portal endpoint URL issue would both have been caught earlier with
-a data exploration step before any UI code was written.
+**Validate API data before building UI.** The position label mismatch
+and the wrong portal endpoint would both have surfaced sooner with a
+quick data check before writing any UI code.
 
-**Ship V1 before adding features.** Transfer portal, the recruit map, gap
-analysis, and multi-team support were all added after a working V1 existed.
-Building on a working foundation was far easier than designing for all of
-them upfront.
+**Ship V1 before adding features.** Transfer portal, the recruit map,
+gap analysis, and multi-team support were all bolted on after a working
+V1 existed. Building on something that already worked was a lot easier
+than trying to design for all of it up front.
 
 **Test every team name programmatically.** Manual inspection would have
-missed the `"App State"` vs. `"Appalachian State"` mismatch. A systematic
-script that tests all 134 names against the live API surfaces issues that
-aren't obvious from documentation.
+missed the "App State" vs. "Appalachian State" mismatch. A script that
+tests all 134 names against the live API catches things documentation
+won't tell you.
 
 ---
 
 ## What Would Be Different in V3
 
-**Year selector on Pages 2 and 4.** Page 1 has a year selector (2021–2024)
-but Pages 2 and 4 are still locked to 2024 rosters and 2023–2025 recruiting
-classes. Adding year range controls to those pages would allow historical
-trend analysis — "how has our OL depth changed over 3 years?"
+**Year selector on Pages 2 and 4.** Page 1 has a year selector
+(2021-2024) but Pages 2 and 4 are still locked to 2024 rosters and
+2023-2025 recruiting classes. Adding year controls there would open up
+trend questions like "how has our OL depth changed over 3 years?"
 
-**Conference-aware competitor defaults.** Right now the competitor default
-is always Ohio State/Georgia/Alabama/Clemson regardless of the selected team.
-A Kansas State user would more likely want to compare against Iowa State,
-TCU, and Oklahoma State. Defaulting to same-conference programs would make
-the tool more immediately useful for any team.
+**Conference-aware competitor defaults.** Right now the default
+competitor set is always Ohio State, Georgia, Alabama, and Clemson,
+regardless of the selected team. A Kansas State user would more likely
+want Iowa State, TCU, and Oklahoma State. Defaulting to same-conference
+programs would make the tool more useful out of the box for any team.
 
-**Player ID-based portal matching.** The current name-matching approach for
-portal history is the weakest part of the tool. CFBD assigns internal player
-IDs, but the roster and portal endpoints don't return them in a consistent
-format. If CFBD standardizes this, the portal column becomes perfectly
-accurate instead of best-effort.
+**Player ID-based portal matching.** The current name-matching approach
+for portal history is the weakest part of the tool. CFBD assigns
+internal player IDs, but the roster and portal endpoints don't return
+them in a consistent format. If that changes, the portal column could
+go from best-effort to fully accurate.
