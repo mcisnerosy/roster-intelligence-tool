@@ -66,7 +66,7 @@ Compares the selected team's recruiting class against chosen competitors.
 
 **Why does each page pick its own competitors?** Page 2 and Page 4 answer different questions, so each gets its own competitor list (up to 4) instead of one shared sidebar selection.
 
-**Why these headcount thresholds?** They follow common roster construction rules of thumb, like needing 2+ scholarship QBs or 6+ OL. Defined in `app.py`, easy to adjust.
+**Why these headcount thresholds?** They're starting defaults (e.g., 2+ scholarship QBs, 6+ OL), not a verified industry standard. Defined in `app.py`, meant to be adjusted to whatever bar actually fits a given program.
 
 **Why CFBD?** It's the most complete free API for college football roster and recruiting data, with consistent coverage back to 2014.
 
@@ -151,6 +151,8 @@ roster-intelligence-tool/
 Full version history, including the move from single-team to multi-team, is in [CHANGELOG.md](CHANGELOG.md).
 
 ---
+
+This tool is an independent project and is not affiliated with, endorsed by, or sponsored by the NCAA, any conference, or any of the universities or athletic programs referenced. Team names and colors are used for identification purposes only.
 
 This project was built with assistance from Claude (Anthropic) via Claude Code for debugging, API integration, and code structure. Project direction, analytical framing, and interpretation of findings were the author's own.
 

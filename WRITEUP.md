@@ -62,10 +62,14 @@ Cloud's secrets manager for the deployed version and in a `.env` file
 (loaded via `python-dotenv`) locally. The same codebase handles both
 through a `st.secrets` → `.env` fallback, no separate config needed.
 
-All three API helper functions use `@st.cache_data(ttl=3600)`, a 1-hour
-in-memory cache. Without it, Page 4 makes up to 15 sequential API calls
-on every interaction (5 programs x 3 years). With it, only the first load
-hits CFBD; everything after that is instant.
+All three API helper functions use `@st.cache_data(ttl=86400, persist="disk")`,
+a 24-hour cache shared across every user of the deployed app and persisted
+to disk so it survives the app sleeping or restarting on Streamlit Cloud.
+Without it, Page 4 makes up to 15 sequential API calls on every interaction
+(5 programs x 3 years); with it, only the first load per cache window hits
+CFBD. The long TTL and persistence matter beyond speed too: CFBD's free
+tier caps out at 1,000 calls/month, and a 1-hour cache that resets every
+time the app sleeps would burn through that fast.
 
 ### Application Layer
 
@@ -146,11 +150,12 @@ POSITION_THRESHOLDS = {
 }
 ```
 
-These thresholds follow real roster construction logic, a team needs at
-least 2 scholarship QBs to run practice rotations safely, and 6 OL to
-field five starters plus a backup at each spot. Keeping thresholds
-explicit and adjustable in one place matters: a tool that calls something
-"critical" should say what number that means.
+These are starting defaults rather than verified benchmarks, the reasoning
+(a team needs at least 2 scholarship QBs to run practice rotations safely,
+6 OL to field five starters plus a backup) is general intuition, not
+numbers checked against real program data. Keeping thresholds explicit and
+adjustable in one place matters regardless: a tool that calls something
+"critical" should say what number that means, and let you change it.
 
 Critical positions trigger an alert panel above the depth tables with a
 "Find Recruits" button. Clicking it stores the position in
@@ -301,6 +306,8 @@ theming and hover text that surfaces what actually matters per point.
 functions and constants, and a clean separation between `app.py` and
 `recruiting_data.py`.
 
-**Domain knowledge.** Position thresholds grounded in real FBS roster
-construction, competitor sets based on actual recruiting dynamics, and
-CFBD's coverage limitations documented rather than glossed over.
+**Domain knowledge.** Competitor sets based on actual recruiting dynamics
+from working inside a program, and CFBD's coverage limitations documented
+rather than glossed over. Position thresholds are explicit and adjustable
+defaults rather than verified benchmarks, by design, so a user can tune
+them to whatever bar fits their own program.

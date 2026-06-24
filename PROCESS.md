@@ -81,9 +81,13 @@ focused on UI logic rather than data pipeline logic.
 
 Without caching, every user interaction re-fetches from CFBD. Page 4
 alone makes up to 15 API calls (5 programs x 3 years). With
-`@st.cache_data(ttl=3600)`, the first load is slow but every later
-interaction is instant. A 1-hour TTL fits because CFBD data updates at
-most once a day.
+`@st.cache_data(ttl=86400, persist="disk")`, the first load per cache
+window is slow but every later interaction, from any visitor, is instant.
+A 24-hour TTL fits because CFBD data updates at most once a day, and disk
+persistence keeps the cache warm across the app sleeping or restarting on
+Streamlit Cloud. That matters because CFBD's free tier caps out at
+1,000 calls/month; a shorter TTL or memory-only cache would burn through
+that for no real freshness gain.
 
 **Session state for cross-page navigation**
 

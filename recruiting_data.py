@@ -62,14 +62,18 @@ HEADERS = {'Authorization': f'Bearer {API_KEY}'}
 # import determines which version is active.
 #
 # Caching rationale: CFBD recruiting data updates at most once per day, so a
-# 1-hour TTL (ttl=3600) is appropriate. Without caching, Page 4 makes 12 API
-# calls on every user interaction (4 teams × 3 years), which is too slow.
-# With caching, only the first load per session fetches from the API.
+# 24-hour TTL with disk persistence (ttl=86400, persist="disk") is plenty
+# fresh and survives the app sleeping/restarting on Streamlit Cloud. This
+# matters because CFBD's free tier caps out at 1,000 calls/month; without
+# caching, Page 4 alone makes up to 15 calls (5 teams x 3 years) on every
+# interaction. The cache is shared across all users of the deployed app,
+# not per-session, so it's the TTL and persistence doing the work here,
+# not how many people happen to be visiting at once.
 # ---------------------------------------------------------------------------
 try:
     import streamlit as st
 
-    @st.cache_data(ttl=3600)
+    @st.cache_data(ttl=86400, persist="disk")
     def fetch_recruiting_class(team: str, year: int) -> pd.DataFrame:
         """
         Fetch a single team's signed recruiting class for one year from CFBD.
@@ -123,7 +127,11 @@ try:
             return pd.DataFrame(records)
 
         except Exception as e:
-            print(f"Error fetching {team} {year}: {e}")
+            response = getattr(e, 'response', None)
+            if response is not None and response.status_code == 429:
+                st.error("CFBD's API rate limit has been hit for this billing period. Data will return once the limit resets.")
+            else:
+                print(f"Error fetching {team} {year}: {e}")
             return pd.DataFrame()
 
 except ImportError:
@@ -181,9 +189,10 @@ def load_recruiting_data(
         Returns empty DataFrame if all API calls fail.
 
     Usage on Page 4:
-        Called once per session with the user-selected team and competitors.
-        Because fetch_recruiting_class is cached, switching between pages
-        does not re-fetch data that was already loaded in the same session.
+        Called with the user-selected team and competitors. fetch_recruiting_class
+        is cached app-wide (shared across all users, not just one session), so
+        switching pages, or another visitor loading the same team/year, doesn't
+        trigger a re-fetch within the cache's TTL.
     """
     all_data = []
     for team in teams:

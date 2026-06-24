@@ -19,7 +19,7 @@ User browser
 Streamlit runtime (app.py)
     ├── Sidebar: team selector + page navigation
     ├── Page routing via st.sidebar.selectbox
-    ├── Cached API calls via @st.cache_data(ttl=3600)
+    ├── Cached API calls via @st.cache_data(ttl=86400, persist="disk")
     │       ├── get_roster(team, year)     → CFBD /roster
     │       ├── get_recruits(year)         → CFBD /recruiting/players
     │       └── get_portal_entries(year)   → CFBD /player/portal
@@ -112,10 +112,10 @@ count <= yellow_max → 🟡 Watch
 count > yellow_max  → 🟢 Healthy
 ```
 
-Benchmarks follow standard FBS roster construction logic:
-- QB: need 2+ scholarship players to run practice safely
-- OL: need 6+ to field 5 starters plus 1 backup at each spot
-- WR: need 4+ to run a full route tree in practice
+These are starting defaults, not verified industry benchmarks; the reasoning
+behind them (e.g., 2+ QBs to run practice safely, 6+ OL for 5 starters plus
+a backup) is general intuition about roster depth, not numbers checked
+against actual program data.
 
 Defined here instead of inline in the UI, so thresholds stay visible,
 adjustable, and consistent across all four pages.
@@ -164,10 +164,13 @@ gets theirs too. If a team isn't in `TEAM_COLORS`, it falls back to
 
 **API helper functions**
 
-All three use `@st.cache_data(ttl=3600)`. The first load fetches from CFBD
-(1 to 3 seconds per call). Everything after that within the session reads
-from cache and returns instantly. Cache is per-session on Streamlit Cloud's
-free tier.
+All three use `@st.cache_data(ttl=86400, persist="disk")`. The first load
+fetches from CFBD (1 to 3 seconds per call); everything after that reads
+from cache and returns instantly. The cache is shared across every user of
+the deployed app, not per-session, and disk persistence means it survives
+the app sleeping or restarting on Streamlit Cloud. That matters because
+CFBD's free tier caps out at 1,000 calls/month, and the cache, not traffic
+volume, is what keeps usage under that.
 
 `get_roster(team, year)`: CFBD `/roster`. Key columns: `position`,
 `firstName`, `lastName`, `year`, `height`, `weight`, `homeCity`,
@@ -287,7 +290,7 @@ Importable by `app.py` and runnable directly via `python recruiting_data.py`.
 
 **`fetch_recruiting_class(team, year)`**
 
-Defined twice: once with `@st.cache_data(ttl=3600)` inside a try block
+Defined twice: once with `@st.cache_data(ttl=86400, persist="disk")` inside a try block
 (Streamlit context), once without inside the except block (standalone
 context). The try/except on `import streamlit as st` decides which
 version runs. That way the function gets caching when run inside
@@ -350,18 +353,21 @@ users on Streamlit Cloud.
 
 ## Caching Strategy
 
-All three API helpers use `@st.cache_data(ttl=3600)`:
+All three API helpers use `@st.cache_data(ttl=86400, persist="disk")`:
 
-| Call | First load | Cached load | Calls per session |
+| Call | First load | Cached load | Calls per cache window (app-wide) |
 |---|---|---|---|
 | `get_roster(team, year)` | ~1s | instant | 1 per team+year combo |
 | `get_recruits(year)` | ~2s | instant | 1 per year |
 | `get_portal_entries(year)` | ~1s | instant | 4 (years 2021-2024) |
 | `fetch_recruiting_class(team, year)` | ~1s | instant | up to 15 (5 teams x 3 years) |
 
-A 1-hour TTL fits since CFBD data updates at most once a day. Shorter
-causes unnecessary API calls; longer risks stale data during an active
-transfer portal window or signing day.
+The cache is shared across all visitors, so "calls per cache window" is the
+worst case for a given team/year combo across the entire 24-hour window,
+not per visitor. A 24-hour TTL fits since CFBD data updates at most once a
+day; shorter would waste calls against the 1,000/month free-tier cap for
+no freshness benefit, and disk persistence keeps the cache warm across the
+app sleeping or restarting on Streamlit Cloud.
 
 ---
 

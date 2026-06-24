@@ -253,7 +253,7 @@ section[data-testid="stSidebar"] .stSelectbox > div > div {
 section[data-testid="stSidebar"] .stSelectbox > div > div > div { color: #FFFFFF !important; }
 section[data-testid="stSidebar"] .stSelectbox svg { fill: #94A3B8 !important; }
 section[data-testid="stSidebar"] .stSelectbox label {
-    color: #64748B !important; font-size: 11px !important;
+    color: #94A3B8 !important; font-size: 11px !important;
     font-weight: 600 !important; text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
 }
@@ -263,7 +263,7 @@ section[data-testid="stSidebar"] .stMultiSelect > div > div {
     border-radius: 6px !important;
 }
 section[data-testid="stSidebar"] .stMultiSelect label {
-    color: #64748B !important; font-size: 11px !important;
+    color: #94A3B8 !important; font-size: 11px !important;
     font-weight: 600 !important; text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
 }
@@ -324,28 +324,6 @@ div[data-testid="stTabs"] button {
     font-family: 'Oswald', sans-serif !important; font-weight: 500 !important;
     text-transform: uppercase !important; letter-spacing: 0.06em !important;
     font-size: 13px !important;
-}
-
-/* Sidebar radio nav: styled as a clean link list */
-
-section[data-testid="stSidebar"] .stRadio label {
-    color: #CBD5E1 !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    padding: 7px 10px 7px 4px !important;
-    border-radius: 5px !important;
-    cursor: pointer !important;
-    display: block !important;
-    width: 100% !important;
-    transition: background 0.15s;
-}
-section[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(255,255,255,0.07) !important;
-    color: #FFFFFF !important;
-}
-section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
-    display: none !important;
 }
 
 div[data-testid="stAlert"] { border-radius: 6px; }
@@ -439,7 +417,8 @@ st.sidebar.markdown("""
 
 st.sidebar.caption(
     'Data: [CollegeFootballData.com](https://collegefootballdata.com)  \n'
-    '~70% FBS roster coverage. Walk-ons and recent transfers may not appear.'
+    '~70% FBS roster coverage. Walk-ons and recent transfers may not appear.  \n'
+    'Not affiliated with or endorsed by the NCAA or any school shown.'
 )
 
 # ---------------------------------------------------------------------------
@@ -472,8 +451,8 @@ POSITION_GROUPS = {
 # count <= red_max    -> Critical  (immediate recruiting action needed)
 # count <= yellow_max -> Watch     (monitor; may need recruiting attention)
 # count > yellow_max  -> Healthy
-# Benchmarks based on standard FBS roster construction logic:
-#   QB: need 2+ to safely run practice; OL: need 6+ for 5 starters + 1 backup.
+# Starting defaults, not verified benchmarks. Adjust to whatever bar fits
+# the program you're looking at.
 POSITION_THRESHOLDS = {
     'QB':  (1, 3), 'RB':  (2, 4), 'WR':  (4, 7),
     'TE':  (2, 4), 'OL':  (6, 9), 'DL':  (4, 7),
@@ -518,16 +497,31 @@ PLOTLY_LAYOUT = dict(
 
 # ---------------------------------------------------------------------------
 # API helpers
-# All three functions use @st.cache_data(ttl=3600), a 1-hour in-memory cache.
-# First load fetches from CFBD API (1-3 seconds per call).
-# Subsequent interactions within the session use cached data (instant).
-# Cache is per-session on Streamlit Cloud free tier.
+# All three functions use @st.cache_data(ttl=86400, persist="disk"), a 24-hour
+# cache that survives the app sleeping/restarting on Streamlit Cloud. CFBD's
+# free tier caps out at 1,000 calls/month, and the cache is shared across all
+# users of this deployed instance (st.cache_data isn't per-session), so a
+# longer TTL plus disk persistence is what actually keeps call volume down,
+# not traffic alone. CFBD data doesn't update faster than daily anyway, so
+# 24 hours costs nothing in freshness.
+# CFBD_RATE_LIMIT_MSG is shown instead of the generic "no data" warning when
+# a call fails with a 429, so a maxed-out monthly quota doesn't look like a
+# typo'd team name.
 # ---------------------------------------------------------------------------
-@st.cache_data(ttl=3600)
+CFBD_RATE_LIMIT_MSG = (
+    "CFBD's API rate limit has been hit for this billing period. "
+    "Data will return once the limit resets."
+)
+
+def _is_rate_limited(exc: Exception) -> bool:
+    response = getattr(exc, 'response', None)
+    return response is not None and response.status_code == 429
+
+@st.cache_data(ttl=86400, persist="disk")
 def get_roster(team: str, year: int = 2024) -> pd.DataFrame:
     """
     Fetch a team roster from CFBD /roster.
-    team must match CFBD naming exactly (run test_teams.py to verify).
+    team must match CFBD naming exactly (see TEAM_COLORS for verified names).
     Key columns: position, firstName, lastName, year, height, weight,
     homeCity, homeState, recruitIds (empty list = no recruiting profile).
     Returns empty DataFrame on error or no data.
@@ -542,10 +536,12 @@ def get_roster(team: str, year: int = 2024) -> pd.DataFrame:
         if not data:
             return pd.DataFrame()
         return pd.DataFrame(data)
-    except Exception:
+    except Exception as e:
+        if _is_rate_limited(e):
+            st.error(CFBD_RATE_LIMIT_MSG)
         return pd.DataFrame()
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400, persist="disk")
 def get_recruits(year: int) -> pd.DataFrame:
     """
     Fetch ALL national recruits for a class year from CFBD /recruiting/players.
@@ -562,10 +558,10 @@ def get_recruits(year: int) -> pd.DataFrame:
         r.raise_for_status()
         return pd.DataFrame(r.json())
     except Exception as e:
-        st.error(f'Failed to load recruiting data for {year}: {e}')
+        st.error(CFBD_RATE_LIMIT_MSG if _is_rate_limited(e) else f'Failed to load recruiting data for {year}: {e}')
         return pd.DataFrame()
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400, persist="disk")
 def get_portal_entries(year: int) -> pd.DataFrame:
     """
     Fetch transfer portal entries for a year from CFBD /player/portal.
@@ -584,7 +580,9 @@ def get_portal_entries(year: int) -> pd.DataFrame:
         if not data:
             return pd.DataFrame()
         return pd.DataFrame(data)
-    except Exception:
+    except Exception as e:
+        if _is_rate_limited(e):
+            st.error(CFBD_RATE_LIMIT_MSG)
         return pd.DataFrame()
 
 def get_status(position: str, count: int) -> tuple:
@@ -847,6 +845,14 @@ elif page == 'Position Deep Dive':
         )
         st.plotly_chart(fig, use_container_width=True)
 
+        # Text/table equivalent of the chart above, for screen readers and
+        # anyone who'd rather scan numbers than a bar chart.
+        with st.expander('View as table'):
+            st.dataframe(
+                comparison_df.sort_values('Players', ascending=False),
+                use_container_width=True, hide_index=True,
+            )
+
 
 # ===========================================================================
 # PAGE 3: RECRUIT DISCOVERY
@@ -1104,6 +1110,17 @@ elif page == 'Recruiting Positioning':
             legend=dict(title_text=' ', orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
         )
         st.plotly_chart(fig2, use_container_width=True)
+
+        # Text/table equivalent of the chart above, for screen readers and
+        # anyone who'd rather scan numbers than a bar chart.
+        with st.expander('View as table'):
+            avg_stars_pivot = (
+                avg_stars.pivot(index='position_group', columns='team', values='avg_stars')
+                .fillna(0).astype(int)
+            )
+            avg_stars_pivot.index.name = 'Position'
+            avg_stars_pivot.columns.name = None
+            st.dataframe(avg_stars_pivot, use_container_width=True)
 
     with tab3:
         st.subheader(f'{selected_team} Recruiting Gap - vs. Competitor Average')
